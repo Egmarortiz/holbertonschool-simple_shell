@@ -1,0 +1,75 @@
+.TH HSH 1 "April 15 2025" "Version 1.0" "HSH Manual"
+
+.SH NAME
+hsh \- simple UNIX command interpreter
+
+.SH SYNOPSIS
+.B hsh
+.br
+echo "command" | 
+.B hsh
+
+.SH DESCRIPTION
+.B hsh
+is a simple UNIX command line interpreter that executes commands read from standard input. It implements basic shell functionality including command execution, PATH resolution, and signal handling.
+
+The shell operates in both interactive and non-interactive modes:
+
+.TP
+.B Interactive Mode
+When running with a terminal, the shell displays a prompt ($ ) and waits for user input.
+
+.TP
+.B Non-Interactive Mode
+When receiving input through a pipe, the shell executes commands without displaying a prompt.
+
+.SS Command Execution
+Commands are searched for in the directories listed in the PATH environment variable. If a command is not found in PATH, an error message is displayed.
+
+.SS Built-in Commands
+.TP
+.B exit [status]
+Exit the shell with optional numeric status. If no status is provided, uses the last command's exit status.
+
+.SS Signal Handling
+The shell handles Ctrl+C (SIGINT) by displaying a new prompt instead of terminating.
+
+.SH OPTIONS
+The shell does not support any command-line options.
+
+.SH EXAMPLES
+Interactive mode:
+.PP
+.nf
+$ ./hsh
+$ ls -l
+$ pwd
+$ exit
+.fi
+
+Non-interactive mode:
+.PP
+.nf
+$ echo "ls -l" | ./hsh
+$ echo "pwd" | ./hsh
+.fi
+
+.SH EXIT STATUS
+.TP
+.B 0
+Successful completion
+.TP
+.B 1-255
+Error occurred during execution
+
+.SH ENVIRONMENT
+.TP
+.B PATH
+List of directories searched to find command executables
+
+.SH AUTHORS
+Holberton School Students
+
+.SH SEE ALSO
+.BR sh (1),
+.BR bash (1)
