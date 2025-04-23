@@ -1,4 +1,6 @@
 #include "shell.h"
+#include <string.h>
+#include <stdlib.h>
 
 /**
  * validate_command_path - Check if a command path is valid
