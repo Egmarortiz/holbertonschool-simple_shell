@@ -20,43 +20,55 @@ void print_environment(void)
  * @args: array of command arguments
  * @line: original input line (for freeing)
  * @prog_name: program name for error messages
- * Return: 1 to continue, 0 to exit
+ * @should_exit: pointer to int indicating if shell should exit
+ * Return: exit status of the command
  */
-int handle_command(char **args, char *line, const char *prog_name)
+int handle_command(char **args, char *line, const char *prog_name,
+		   int *should_exit)
 {
+	int exit_status = 0;
+
 	if (strcmp(args[0], "exit") == 0)
 	{
 		free_args(args);
 		free(line);
-		return (0); /* exit the shell */
+		*should_exit = 1;
+		return (0); /* exit the shell with status 0 */
 	}
 	if (strcmp(args[0], "env") == 0)
 	{
 		print_environment();
 		free_args(args);
 		free(line);
-		return (1); /* continue the shell loop */
+		return (0); /* success status */
 	}
-	execute_command(args, prog_name);
+	execute_command(args, prog_name, &exit_status);
 	free_args(args);
 	free(line);
-	return (1); /* continue the shell loop */
+	return (exit_status); /* return exit status from command */
 }
 
 /**
  * main - entry point for simple_shell with built-ins exit and env
  * @argc: arg count (unused)
  * @argv: arg vector; argv[0] used for errors
- * Return: 0 on exit
+ * Return: exit status
  */
 int main(int argc, char **argv)
 {
 	char *line;
 	char **args;
+	int exit_status = 0;
+	int interactive;
+	int should_exit = 0;
 	(void)argc;
+
+	interactive = isatty(STDIN_FILENO);
+
 	while (1)
 	{
-		print_prompt();
+		if (interactive)
+			print_prompt();
 		line = read_line();
 		if (!line)
 			break;  /* EOF or error */
@@ -73,11 +85,14 @@ int main(int argc, char **argv)
 			free(line);
 			continue;
 		}
-		if (!handle_command(args, line, argv[0]))
-			exit(0);
-	}
-	if (isatty(STDIN_FILENO))
-		write(STDOUT_FILENO, "\n", 1);
-	return (0);
-}
 
+		exit_status = handle_command(args, line, argv[0], &should_exit);
+		/* Exit if requested by a builtin or if in non-interactive mode */
+		if (should_exit || !interactive)
+			exit(exit_status);
+	}
+
+	if (interactive)
+		write(STDOUT_FILENO, "\n", 1);
+	return (exit_status);
+}

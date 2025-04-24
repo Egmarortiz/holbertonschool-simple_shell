@@ -86,18 +86,20 @@ static char *resolve_path(const char *cmd)
  * execute_command - resolve cmd, then fork & exec; skip fork if not found.
  * @args: NULL-terminated argv array.
  * @prog_name: argv[0] for error messages.
+ * @exit_status: pointer to store the command's exit status
  */
-void execute_command(char **args, const char *prog_name)
+void execute_command(char **args, const char *prog_name, int *exit_status)
 {
 	pid_t pid;
 	int status;
 	char *path;
 
-	/* Resolve the executable’s path first */
+	/* Resolve the executable's path first */
 	path = resolve_path(args[0]);
 	if (path == NULL)
 	{
-		fprintf(stderr, "%s: %s: not found\n", prog_name, args[0]);
+		fprintf(stderr, "%s: 1: %s: not found\n", prog_name, args[0]);
+		*exit_status = 127;  /* Standard command not found exit code */
 		return;
 	}
 
@@ -118,5 +120,9 @@ void execute_command(char **args, const char *prog_name)
 	/* Parent frees path and waits */
 	free(path);
 	waitpid(pid, &status, 0);
+	if (WIFEXITED(status))
+		*exit_status = WEXITSTATUS(status);
+	else
+		*exit_status = 1;  /* Generic error for abnormal termination */
 }
 
