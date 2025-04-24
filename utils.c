@@ -57,9 +57,6 @@ char *search_in_path(char *command, char *path_env)
 	char *path_copy, *path_token, *file_path;
 	int command_len, dir_len;
 
-	fprintf(stderr, "DEBUG: Searching for command: %s\n", command);
-	fprintf(stderr, "DEBUG: PATH: %s\n", path_env);
-	
 	path_copy = strdup(path_env);
 	if (path_copy == NULL)
 		return (NULL);
@@ -81,11 +78,8 @@ char *search_in_path(char *command, char *path_env)
 		strcat(file_path, "/");
 		strcat(file_path, command);
 
-		fprintf(stderr, "DEBUG: Checking path: %s\n", file_path);
-		
 		if (validate_command_path(file_path))
 		{
-			fprintf(stderr, "DEBUG: Found valid command: %s\n", file_path);
 			free(path_copy);
 			return (file_path);
 		}
