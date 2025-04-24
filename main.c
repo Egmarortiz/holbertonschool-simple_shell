@@ -3,8 +3,45 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+/**
+ * print_environment - prints all environment variables
+ * Return: void
+ */
+void print_environment(void)
+{
+	size_t i;
 
-extern char **environ;
+	for (i = 0; environ[i]; i++)
+		printf("%s\n", environ[i]);
+}
+
+/**
+ * handle_command - processes and executes the given command
+ * @args: array of command arguments
+ * @line: original input line (for freeing)
+ * @prog_name: program name for error messages
+ * Return: 1 to continue, 0 to exit
+ */
+int handle_command(char **args, char *line, const char *prog_name)
+{
+	if (strcmp(args[0], "exit") == 0)
+	{
+		free_args(args);
+		free(line);
+		return (0); /* exit the shell */
+	}
+	if (strcmp(args[0], "env") == 0)
+	{
+		print_environment();
+		free_args(args);
+		free(line);
+		return (1); /* continue the shell loop */
+	}
+	execute_command(args, prog_name);
+	free_args(args);
+	free(line);
+	return (1); /* continue the shell loop */
+}
 
 /**
  * main - entry point for simple_shell with built-ins exit and env
@@ -16,8 +53,6 @@ int main(int argc, char **argv)
 {
 	char *line;
 	char **args;
-	size_t i;
-
 	(void)argc;
 	while (1)
 	{
@@ -38,23 +73,8 @@ int main(int argc, char **argv)
 			free(line);
 			continue;
 		}
-		if (strcmp(args[0], "exit") == 0)
-		{
-			free_args(args);
-			free(line);
+		if (!handle_command(args, line, argv[0]))
 			exit(0);
-		}
-		if (strcmp(args[0], "env") == 0)
-		{
-			for (i = 0; environ[i]; i++)
-				printf("%s\n", environ[i]);
-			free_args(args);
-			free(line);
-			continue;
-		}
-		execute_command(args, argv[0]);
-		free_args(args);
-		free(line);
 	}
 	if (isatty(STDIN_FILENO))
 		write(STDOUT_FILENO, "\n", 1);

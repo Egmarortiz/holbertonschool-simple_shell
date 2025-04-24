@@ -12,6 +12,8 @@ int is_blank(const char *s);
 char **split_line(char *line);
 void free_args(char **args);
 void execute_command(char **args, const char *prog_name);
+void print_environment(void);
+int handle_command(char **args, char *line, const char *prog_name);
 
 #endif /* SHELL_H */
 

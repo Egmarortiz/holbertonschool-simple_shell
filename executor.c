@@ -7,27 +7,34 @@
 #include <string.h>
 
 /**
- * resolve_path - search for cmd in PATH or use cmd if contains '/'.  
- * @cmd: the command name from argv[0].  
- * Return: malloc’d full path if found (caller must free), or NULL.
+ * get_path_env - get the PATH environment variable
+ * Return: pointer to PATH value, or NULL if not found
  */
-static char *resolve_path(const char *cmd)
+static char *get_path_env(void)
 {
-	char *path_env, *path_dup, *dir, *full;
+	int i;
+
+	for (i = 0; environ[i] != NULL; i++)
+	{
+		if (strncmp(environ[i], "PATH=", 5) == 0)
+		{
+			return (environ[i] + 5);
+		}
+	}
+	return (NULL);
+}
+
+/**
+ * search_in_path - search for cmd in PATH directories
+ * @cmd: command to search for
+ * @path_env: PATH environment variable value
+ * Return: malloc'd full path if found (caller must free), or NULL
+ */
+static char *search_in_path(const char *cmd, char *path_env)
+{
+	char *path_dup, *dir, *full;
 	size_t len;
 
-	/* If cmd contains a slash, assume it's a path */
-	if (strchr(cmd, '/'))
-	{
-		if (access(cmd, X_OK) == 0)
-			return (strdup(cmd));
-		return (NULL);
-	}
-
-	/* Get PATH and iterate its directories */
-	path_env = getenv("PATH");
-	if (!path_env)
-		return (NULL);
 	path_dup = strdup(path_env);
 	if (!path_dup)
 		return (NULL);
@@ -48,6 +55,31 @@ static char *resolve_path(const char *cmd)
 	}
 	free(path_dup);
 	return (NULL);
+}
+
+/**
+ * resolve_path - search for cmd in PATH or use cmd if contains '/'.
+ * @cmd: the command name from argv[0].
+ * Return: malloc'd full path if found (caller must free), or NULL.
+ */
+static char *resolve_path(const char *cmd)
+{
+	char *path_env;
+
+	/* If cmd contains a slash, assume it's a path */
+	if (strchr(cmd, '/'))
+	{
+		if (access(cmd, X_OK) == 0)
+			return (strdup(cmd));
+		return (NULL);
+	}
+
+	/* Get PATH and search in its directories */
+	path_env = get_path_env();
+	if (!path_env)
+		return (NULL);
+
+	return (search_in_path(cmd, path_env));
 }
 
 /**
