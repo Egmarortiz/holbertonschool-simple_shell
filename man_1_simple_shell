@@ -1,75 +1,78 @@
-.TH HSH 1 "April 15 2025" "Version 1.0" "HSH Manual"
-
+.TH SIMPLE_SHELL 1 "April 24, 2025" "Version 1.0" "User Commands"
 .SH NAME
-hsh \- simple UNIX command interpreter
-
+simple_shell \- a simple UNIX command line interpreter
 .SH SYNOPSIS
-.B hsh
-.br
-echo "command" | 
-.B hsh
-
+.B simple_shell
 .SH DESCRIPTION
-.B hsh
-is a simple UNIX command line interpreter that executes commands read from standard input. It implements basic shell functionality including command execution, PATH resolution, and signal handling.
-
-The shell operates in both interactive and non-interactive modes:
-
-.TP
-.B Interactive Mode
-When running with a terminal, the shell displays a prompt ($ ) and waits for user input.
-
-.TP
-.B Non-Interactive Mode
-When receiving input through a pipe, the shell executes commands without displaying a prompt.
-
-.SS Command Execution
-Commands are searched for in the directories listed in the PATH environment variable. If a command is not found in PATH, an error message is displayed.
-
-.SS Built-in Commands
+.B simple_shell
+is a simple command line interpreter that reads commands from standard input and executes them. It can be used in both interactive and non-interactive modes.
+.PP
+When used interactively, it displays a prompt ($) and awaits user input. When used non-interactively, it reads commands from standard input without displaying a prompt.
+.PP
+The shell handles command lines with arguments and implements the PATH lookup for executables. It also implements built-in commands and proper handling of the end-of-file condition (Ctrl+D).
+.SH BUILT-IN COMMANDS
 .TP
 .B exit [status]
-Exit the shell with optional numeric status. If no status is provided, uses the last command's exit status.
-
-.SS Signal Handling
-The shell handles Ctrl+C (SIGINT) by displaying a new prompt instead of terminating.
-
-.SH OPTIONS
-The shell does not support any command-line options.
-
-.SH EXAMPLES
-Interactive mode:
-.PP
-.nf
-$ ./hsh
-$ ls -l
-$ pwd
-$ exit
-.fi
-
-Non-interactive mode:
-.PP
-.nf
-$ echo "ls -l" | ./hsh
-$ echo "pwd" | ./hsh
-.fi
-
-.SH EXIT STATUS
+Exit the shell with an optional status code. If no status is provided, the shell exits with the status of the last executed command.
 .TP
-.B 0
-Successful completion
-.TP
-.B 1-255
-Error occurred during execution
-
+.B env
+Print the current environment variables.
+.SH COMMAND EXECUTION
+Commands are executed by following these steps:
+.PP
+1. The shell splits the command line into words using spaces and tabs as delimiters.
+.PP
+2. If the first word of the command is "exit" or "env", the corresponding built-in command is executed.
+.PP
+3. Otherwise, the shell searches for the command in the directories listed in the PATH environment variable.
+.PP
+4. If the command is found, the shell creates a child process and executes the command with the provided arguments.
+.PP
+5. If the command is not found, an error message is displayed, and the shell returns a status code of 127.
 .SH ENVIRONMENT
+The shell uses the following environment variables:
 .TP
 .B PATH
-List of directories searched to find command executables
-
+A colon-separated list of directories used to search for executable commands.
+.SH EXIT STATUS
+The shell returns the exit status of the last command executed, or 0 if no command was executed.
+.PP
+If a command is not found, the shell returns 127.
+.PP
+If a command is found but cannot be executed, the shell returns 126.
+.SH EXAMPLE
+.PP
+Interactive mode:
+.PP
+.RS
+$ ./hsh
+.br
+($) ls
+.br
+AUTHORS demo executor.c hsh main.c parser.c prompt.c README.md shell.h
+.br
+($) pwd
+.br
+/Users/hector/holbertonschool-simple_shell
+.br
+($) exit
+.br
+$
+.RE
+.PP
+Non-interactive mode:
+.PP
+.RS
+$ echo "ls" | ./hsh
+.br
+AUTHORS demo executor.c hsh main.c parser.c prompt.c README.md shell.h
+.RE
+.SH BUGS
+No known bugs. Please report any bugs to the authors.
 .SH AUTHORS
 Holberton School Students
-
 .SH SEE ALSO
 .BR sh (1),
-.BR bash (1)
+.BR bash (1),
+.BR dash (1)
+
