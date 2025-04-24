@@ -9,7 +9,9 @@ void print_prompt(void);
 char *read_line(void);
 void trim_newline(char *s);
 int is_blank(const char *s);
-void execute_command(char *cmd, const char *prog_name);
+char **split_line(char *line);
+void free_args(char **args);
+void execute_command(char **args, const char *prog_name);
 
 #endif /* SHELL_H */
 

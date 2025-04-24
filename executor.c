@@ -6,18 +6,14 @@
 #include <stdio.h>
 
 /**
- * execute_command - forks and execve’s the given cmd.
- * @cmd: full path or relative name of the executable.
- * @prog_name: argv[0] for error messages.
+ * execute_command - forks and execve’s the given args
+ * @args: NULL-terminated argv array
+ * @prog_name: argv[0] for error messages
  */
-void execute_command(char *cmd, const char *prog_name)
+void execute_command(char **args, const char *prog_name)
 {
 	pid_t pid;
 	int status;
-	char *args[2];
-
-	args[0] = cmd;
-	args[1] = NULL;
 
 	pid = fork();
 	if (pid == -1)
@@ -27,7 +23,7 @@ void execute_command(char *cmd, const char *prog_name)
 	}
 	if (pid == 0)
 	{
-		execve(cmd, args, environ);
+		execve(args[0], args, environ);
 		perror(prog_name);
 		exit(EXIT_FAILURE);
 	}

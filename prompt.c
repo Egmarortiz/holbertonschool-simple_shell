@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 /**
- * print_prompt - writes the shell prompt if running interactively.
+ * print_prompt - writes the shell prompt if running interactively
  */
 void print_prompt(void)
 {
