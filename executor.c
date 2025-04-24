@@ -7,8 +7,8 @@
 #include <string.h>
 
 /**
- * resolve_path - search for cmd in PATH or use cmd if contains '/'.  
- * @cmd: the command name from argv[0].  
+ * resolve_path - search for cmd in PATH or use cmd if contains '/'.
+ * @cmd: the command name from argv[0].
  * Return: malloc’d full path if found (caller must free), or NULL.
  */
 static char *resolve_path(const char *cmd)

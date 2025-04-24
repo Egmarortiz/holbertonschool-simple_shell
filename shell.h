@@ -12,6 +12,7 @@ int is_blank(const char *s);
 char **split_line(char *line);
 void free_args(char **args);
 void execute_command(char **args, const char *prog_name);
+int handle_builtin(char **args, char *line);
 
 #endif /* SHELL_H */
 

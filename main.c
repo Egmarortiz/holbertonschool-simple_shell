@@ -4,7 +4,37 @@
 #include <unistd.h>
 #include <string.h>
 
-extern char **environ;
+/**
+ * handle_builtin - Handle built-in shell commands
+ * @args: Array of command arguments
+ * @line: Original input line (for freeing)
+ *
+ * This function handles the built-in shell commands:
+ * - "exit": exits the shell
+ * - "env": prints the environment variables
+ *
+ * Return: 1 if builtin was handled, 0 otherwise
+ */
+int handle_builtin(char **args, char *line)
+{
+	size_t i;
+
+	if (strcmp(args[0], "exit") == 0)
+	{
+		free_args(args);
+		free(line);
+		exit(0);
+	}
+	if (strcmp(args[0], "env") == 0)
+	{
+		for (i = 0; environ[i]; i++)
+			printf("%s\n", environ[i]);
+		free_args(args);
+		free(line);
+		return (1);
+	}
+	return (0);
+}
 
 /**
  * main - entry point for simple_shell with built-ins exit and env
@@ -16,7 +46,6 @@ int main(int argc, char **argv)
 {
 	char *line;
 	char **args;
-	size_t i;
 
 	(void)argc;
 	while (1)
@@ -38,20 +67,8 @@ int main(int argc, char **argv)
 			free(line);
 			continue;
 		}
-		if (strcmp(args[0], "exit") == 0)
-		{
-			free_args(args);
-			free(line);
-			exit(0);
-		}
-		if (strcmp(args[0], "env") == 0)
-		{
-			for (i = 0; environ[i]; i++)
-				printf("%s\n", environ[i]);
-			free_args(args);
-			free(line);
+		if (handle_builtin(args, line))
 			continue;
-		}
 		execute_command(args, argv[0]);
 		free_args(args);
 		free(line);
@@ -60,4 +77,3 @@ int main(int argc, char **argv)
 		write(STDOUT_FILENO, "\n", 1);
 	return (0);
 }
-
