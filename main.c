@@ -87,8 +87,8 @@ int main(int argc, char **argv)
 		}
 
 		exit_status = handle_command(args, line, argv[0], &should_exit);
-		/* Exit if requested by a builtin or if in non-interactive mode */
-		if (should_exit || !interactive)
+		/* Exit if requested by a builtin command */
+		if (should_exit)
 			exit(exit_status);
 	}
 
