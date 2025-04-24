@@ -5,6 +5,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
+/* Macro to handle child process error and exit */
+#define HANDLE_CHILD_ERROR(p, n) do { \
+	perror(n); \
+	free(p); \
+	exit(errno == ENOENT ? 2 : EXIT_FAILURE); \
+} while (0)
 
 /**
  * get_path_env - get the PATH environment variable
@@ -83,46 +91,61 @@ static char *resolve_path(const char *cmd)
 }
 
 /**
- * execute_command - resolve cmd, then fork & exec; skip fork if not found.
- * @args: NULL-terminated argv array.
- * @prog_name: argv[0] for error messages.
+ * resolve_and_execute - resolve path and execute command
+ * @args: NULL-terminated argv array
+ * @prog_name: argv[0] for error messages
  * @exit_status: pointer to store the command's exit status
+ *
+ * Return: 1 if command executed, 0 if command not found
  */
-void execute_command(char **args, const char *prog_name, int *exit_status)
+static int resolve_and_execute(char **args, const char *prog_name,
+							int *exit_status)
 {
 	pid_t pid;
-	int status;
 	char *path;
+	int status;
 
-	/* Resolve the executable's path first */
 	path = resolve_path(args[0]);
 	if (path == NULL)
-	{
-		fprintf(stderr, "%s: 1: %s: not found\n", prog_name, args[0]);
-		*exit_status = 127;  /* Standard command not found exit code */
-		return;
-	}
+		return (0);
 
 	pid = fork();
 	if (pid == -1)
 	{
 		perror(prog_name);
 		free(path);
-		return;
+		return (1);
 	}
-	if (pid == 0)
+
+	if (pid == 0) /* Child process */
 	{
 		execve(path, args, environ);
-		perror(prog_name);
-		free(path);
-		exit(EXIT_FAILURE);
+		/* If execve fails, handle the error and exit */
+		HANDLE_CHILD_ERROR(path, prog_name);
 	}
-	/* Parent frees path and waits */
+
+	/* Parent process */
 	free(path);
 	waitpid(pid, &status, 0);
-	if (WIFEXITED(status))
-		*exit_status = WEXITSTATUS(status);
-	else
-		*exit_status = 1;  /* Generic error for abnormal termination */
+
+	/* Set exit status based on child termination */
+	*exit_status = WIFEXITED(status) ? WEXITSTATUS(status) : 1;
+
+	return (1);
+}
+
+/**
+ * execute_command - resolve cmd, then fork & exec; skip fork if not found
+ * @args: NULL-terminated argv array
+ * @prog_name: argv[0] for error messages
+ * @exit_status: pointer to store the command's exit status
+ */
+void execute_command(char **args, const char *prog_name, int *exit_status)
+{
+	if (!resolve_and_execute(args, prog_name, exit_status))
+	{
+		fprintf(stderr, "%s: 1: %s: not found\n", prog_name, args[0]);
+		*exit_status = 127;  /* Standard command not found exit code */
+	}
 }
 

@@ -24,16 +24,16 @@ void print_environment(void)
  * Return: exit status of the command
  */
 int handle_command(char **args, char *line, const char *prog_name,
-		   int *should_exit)
+		   int *should_exit, int current_status)
 {
-	int exit_status = 0;
+	int exit_status = current_status;
 
 	if (strcmp(args[0], "exit") == 0)
 	{
 		free_args(args);
 		free(line);
 		*should_exit = 1;
-		return (0); /* exit the shell with status 0 */
+		return (exit_status); /* exit with current status */
 	}
 	if (strcmp(args[0], "env") == 0)
 	{
@@ -58,7 +58,7 @@ int main(int argc, char **argv)
 {
 	char *line;
 	char **args;
-	int exit_status = 0;
+	int exit_status = 0; /* Initialize exit status to 0 */
 	int interactive;
 	int should_exit = 0;
 	(void)argc;
@@ -86,7 +86,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		exit_status = handle_command(args, line, argv[0], &should_exit);
+		exit_status = handle_command(args, line, argv[0], &should_exit, exit_status);
 		/* Exit if requested by a builtin command */
 		if (should_exit)
 			exit(exit_status);
