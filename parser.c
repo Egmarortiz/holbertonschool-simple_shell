@@ -11,6 +11,8 @@ char **split_line(char *line)
 	int bufsize = 64, position = 0;
 	char **tokens = malloc(bufsize * sizeof(char *));
 	char *token, *token_copy;
+	
+	fprintf(stderr, "DEBUG: Parsing line: '%s'\n", line);
 
 	if (!tokens)
 	{
@@ -18,9 +20,12 @@ char **split_line(char *line)
 		return (NULL);
 	}
 
+	/* Simple tokenization on whitespace - no special handling */
 	token = strtok(line, " \t\r\n\a");
 	while (token != NULL)
 	{
+		fprintf(stderr, "DEBUG: Found token: '%s'\n", token);
+		
 		/* Create a copy of the token */
 		token_copy = strdup(token);
 		if (!token_copy)
@@ -42,6 +47,8 @@ char **split_line(char *line)
 		token = strtok(NULL, " \t\r\n\a");
 	}
 	tokens[position] = NULL;
+	
+	fprintf(stderr, "DEBUG: Parsed %d tokens\n", position);
 	return (tokens);
 }
 

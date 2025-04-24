@@ -13,8 +13,13 @@ int validate_command_path(char *command_path)
 	if (command_path == NULL)
 		return (0);
 
-	if (stat(command_path, &buffer) == 0)
-		return (1);
+	/* Check if file exists and is a regular file */
+	if (stat(command_path, &buffer) == 0 && S_ISREG(buffer.st_mode))
+	{
+		/* Check if file is executable */
+		if (access(command_path, X_OK) == 0)
+			return (1);
+	}
 
 	return (0);
 }
@@ -30,18 +35,21 @@ char *find_command_path(char *command)
 	char *path_env;
 	struct stat buffer;
 
+	if (command == NULL || *command == '\0')
+		return (NULL);
+
 	/* If command contains a slash, check if it's a valid path directly */
 	if (strchr(command, '/') != NULL)
 	{
-		if (stat(command, &buffer) == 0)
+		if (validate_command_path(command))
 			return (strdup(command));
 		return (NULL);
 	}
 
+	/* Not an absolute path, search in PATH */
 	path_env = getenv("PATH");
 	if (path_env == NULL)
 		return (NULL);
-
 	return (search_in_path(command, path_env));
 }
 
@@ -87,7 +95,6 @@ char *search_in_path(char *command, char *path_env)
 		free(file_path);
 		path_token = strtok(NULL, ":");
 	}
-
 	free(path_copy);
 	return (NULL);
 }
