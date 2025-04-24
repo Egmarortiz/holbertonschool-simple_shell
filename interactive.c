@@ -77,3 +77,21 @@ char *read_line(void)
 	return (line);
 }
 
+/**
+ * write_command_error - Write a command error message to stderr
+ * @command: The command that caused the error
+ * @error: The error message to display
+ */
+void write_command_error(const char *command, const char *error)
+{
+	char error_message[1024];
+	int len;
+
+	len = snprintf(error_message, sizeof(error_message),
+		"./hsh: 1: %s: %s\n", command, error);
+
+	if (len > 0)
+	{
+		write(STDERR_FILENO, error_message, len);
+	}
+}

@@ -1,6 +1,41 @@
 #include "shell.h"
 
 /**
+ * process_token - Process a token and add it to the token array
+ * @tokens: Array of tokens
+ * @position: Pointer to the current position in the token array
+ * @bufsize: Pointer to the current buffer size
+ * @token: The token to process
+ *
+ * Return: 1 on success, 0 on failure
+ */
+int process_token(char ***tokens, int *position, int *bufsize, char *token)
+{
+	char *token_copy;
+
+	/* Create a copy of the token */
+	token_copy = strdup(token);
+	if (!token_copy)
+	{
+		perror("strdup");
+		free_and_null_tokens(*tokens, *position);
+		return (0);
+	}
+
+	(*tokens)[*position] = token_copy;
+	(*position)++;
+
+	/* Check if we need to resize the buffer */
+	if (*position >= *bufsize)
+	{
+		if (!resize_token_buffer(tokens, bufsize, *position))
+			return (0);
+	}
+
+	return (1);
+}
+
+/**
  * split_line - Split a line into tokens
  * @line: The line to split
  *
@@ -10,9 +45,7 @@ char **split_line(char *line)
 {
 	int bufsize = 64, position = 0;
 	char **tokens = malloc(bufsize * sizeof(char *));
-	char *token, *token_copy;
-	
-	fprintf(stderr, "DEBUG: Parsing line: '%s'\n", line);
+	char *token;
 
 	if (!tokens)
 	{
@@ -24,31 +57,13 @@ char **split_line(char *line)
 	token = strtok(line, " \t\r\n\a");
 	while (token != NULL)
 	{
-		fprintf(stderr, "DEBUG: Found token: '%s'\n", token);
-		
-		/* Create a copy of the token */
-		token_copy = strdup(token);
-		if (!token_copy)
-		{
-			perror("strdup");
-			free_and_null_tokens(tokens, position);
+		if (!process_token(&tokens, &position, &bufsize, token))
 			return (NULL);
-		}
-
-		tokens[position] = token_copy;
-		position++;
-
-		if (position >= bufsize)
-		{
-			if (!resize_token_buffer(&tokens, &bufsize, position))
-				return (NULL);
-		}
 
 		token = strtok(NULL, " \t\r\n\a");
 	}
 	tokens[position] = NULL;
-	
-	fprintf(stderr, "DEBUG: Parsed %d tokens\n", position);
+
 	return (tokens);
 }
 

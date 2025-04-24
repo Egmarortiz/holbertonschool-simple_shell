@@ -47,19 +47,17 @@ int launch_process(char **args, shell_state_t *state)
 }
 
 /**
- * handle_child_process - Handle the child process execution
+ * prepare_exec_args - Prepare arguments for execve
  * @command_path: Full path to the command
  * @args: Array of command arguments
  *
- * Return: Should never return if successful
+ * Return: Newly allocated array of arguments for execve, or NULL on error
  */
-int handle_child_process(const char *command_path, char * const *args)
+char **prepare_exec_args(const char *command_path, char * const *args)
 {
 	char **exec_args;
 	int arg_count;
 	int i;
-	const char *exec_msg;
-	const char *perm_err;
 
 	/* Count arguments */
 	for (arg_count = 0; args[arg_count] != NULL; arg_count++)
@@ -70,7 +68,7 @@ int handle_child_process(const char *command_path, char * const *args)
 	if (exec_args == NULL)
 	{
 		write(STDERR_FILENO, "Memory allocation error\n", 24);
-		return (1);
+		return (NULL);
 	}
 
 	/* Set up argument array */
@@ -79,10 +77,20 @@ int handle_child_process(const char *command_path, char * const *args)
 		exec_args[i + 1] = (char *)args[i];
 	exec_args[arg_count + 1] = NULL;
 
-	/* Reset signal handling */
-	signal(SIGINT, SIG_DFL);
+	return (exec_args);
+}
 
-	/* Check permissions */
+/**
+ * check_command_permissions - Check if command is executable
+ * @command_path: Full path to the command
+ * @exec_args: Arguments array for execve (to free if error)
+ *
+ * Return: 0 if executable, otherwise appropriate error code
+ */
+int check_command_permissions(const char *command_path, char **exec_args)
+{
+	const char *perm_err;
+
 	if (access(command_path, X_OK) != 0)
 	{
 		if (errno == EACCES)
@@ -97,6 +105,33 @@ int handle_child_process(const char *command_path, char * const *args)
 		free(exec_args);
 		return (127);
 	}
+	return (0);
+}
+
+/**
+ * handle_child_process - Handle the child process execution
+ * @command_path: Full path to the command
+ * @args: Array of command arguments
+ *
+ * Return: Should never return if successful
+ */
+int handle_child_process(const char *command_path, char * const *args)
+{
+	char **exec_args;
+	int perm_check;
+	const char *exec_msg;
+
+	exec_args = prepare_exec_args(command_path, args);
+	if (exec_args == NULL)
+		return (1);
+
+	/* Reset signal handling */
+	signal(SIGINT, SIG_DFL);
+
+	/* Check permissions */
+	perm_check = check_command_permissions(command_path, exec_args);
+	if (perm_check != 0)
+		return (perm_check);
 
 	/* Execute command */
 	exec_msg = "DEBUG: Executing now\n";
@@ -116,7 +151,10 @@ int handle_child_process(const char *command_path, char * const *args)
  * @args: Original command arguments
  * @exec_args: Arguments array for execve
  */
-void handle_execve_error(const char *command_path, char * const *args, char **exec_args)
+void handle_execve_error(
+	const char *command_path,
+	char * const *args,
+	char **exec_args)
 {
 	const char *err_prefix;
 	const char *err_msg;
@@ -150,38 +188,4 @@ void handle_execve_error(const char *command_path, char * const *args, char **ex
 		exit(126); /* Permission denied */
 	else
 		exit(EXIT_FAILURE); /* Other errors */
-}
-
-/**
- * fork_process - Fork a new process
- *
- * Return: PID of the new process, -1 on failure
- */
-pid_t fork_process(void)
-{
-	return (fork());
-}
-
-/**
- * wait_for_process - Wait for a process to finish
- * @pid: Process ID to wait for
- * @state: Pointer to shell state structure
- *
- * Return: 1 to continue shell loop
- */
-int wait_for_process(pid_t pid, shell_state_t *state)
-{
-	pid_t wpid;
-	int status;
-
-	do {
-		wpid = waitpid(pid, &status, WUNTRACED);
-	} while (!WIFEXITED(status) && !WIFSIGNALED(status) && wpid != -1);
-
-	if (WIFEXITED(status))
-		state->exit_status = WEXITSTATUS(status);
-	else if (WIFSIGNALED(status))
-		state->exit_status = 128 + WTERMSIG(status);
-
-	return (1);
 }

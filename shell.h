@@ -14,7 +14,7 @@
 
 /* Shell state structure */
 typedef struct shell_state {
-    int exit_status;
+  int exit_status;
 } shell_state_t;
 
 /* Environment variable */
@@ -24,9 +24,17 @@ extern char **environ;
 
 /* Main functions */
 shell_state_t init_shell_state(void);
-int process_command(char *line, shell_state_t *state);
 int shell_loop(shell_state_t *state);
 void handle_signal(int signo);
+
+/* Command processing functions */
+int process_command(char *line, shell_state_t *state);
+int handle_empty_command(char **args);
+int execute_parsed_command(char **args, shell_state_t *state);
+
+/* Shell mode functions */
+int handle_pipe_mode(shell_state_t *state);
+int handle_interactive_mode(shell_state_t *state);
 
 /* Input/output functions */
 char *read_line(void);
