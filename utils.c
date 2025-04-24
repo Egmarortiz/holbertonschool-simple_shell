@@ -1,26 +1,21 @@
 #include "shell.h"
+#include <sys/stat.h>
 
 /**
- * validate_command_path - Check if a command path is valid
+ * validate_command_path - Check if a path points to an executable
  * @command_path: Path to check
  *
- * Return: 1 if valid, 0 if not
+ * Return: 1 if valid, 0 otherwise
  */
-int validate_command_path(char *command_path)
+int validate_command_path(const char *command_path)
 {
-	struct stat buffer;
+	struct stat st;
 
-	if (command_path == NULL)
-		return (0);
-
-	/* Check if file exists and is a regular file */
-	if (stat(command_path, &buffer) == 0 && S_ISREG(buffer.st_mode))
+	if (stat(command_path, &st) == 0)
 	{
-		/* Check if file is executable */
-		if (access(command_path, X_OK) == 0)
+		if (S_ISREG(st.st_mode) && (st.st_mode & S_IXUSR))
 			return (1);
 	}
-
 	return (0);
 }
 
@@ -28,17 +23,15 @@ int validate_command_path(char *command_path)
  * find_command_path - Find the full path of a command
  * @command: Command to find
  *
- * Return: Full path to the command if found, NULL otherwise
+ * Return: Full path of command if found, NULL otherwise
  */
-char *find_command_path(char *command)
+char *find_command_path(const char *command)
 {
-	char *path_env;
-	struct stat buffer;
+	const char *path_env;
 
 	if (command == NULL || *command == '\0')
 		return (NULL);
 
-	/* If command contains a slash, check if it's a valid path directly */
 	if (strchr(command, '/') != NULL)
 	{
 		if (validate_command_path(command))
@@ -46,56 +39,53 @@ char *find_command_path(char *command)
 		return (NULL);
 	}
 
-	/* Not an absolute path, search in PATH */
 	path_env = getenv("PATH");
 	if (path_env == NULL)
 		return (NULL);
+
 	return (search_in_path(command, path_env));
 }
 
 /**
- * search_in_path - Search for command in PATH directories
+ * search_in_path - Search for a command in PATH
  * @command: Command to find
- * @path_env: PATH environment variable
+ * @path_env: PATH environment variable value
  *
  * Return: Full path if found, NULL otherwise
  */
-char *search_in_path(char *command, char *path_env)
+char *search_in_path(const char *command, const char *path_env)
 {
-	char *path_copy, *path_token, *file_path;
-	int command_len, dir_len;
+	char *path_copy;
+	char *dir;
+	char *full_path;
+	size_t path_len;
 
 	path_copy = strdup(path_env);
 	if (path_copy == NULL)
 		return (NULL);
 
-	command_len = strlen(command);
-	path_token = strtok(path_copy, ":");
-
-	while (path_token != NULL)
+	dir = strtok(path_copy, ":");
+	while (dir != NULL)
 	{
-		dir_len = strlen(path_token);
-		file_path = malloc(dir_len + command_len + 2);
-		if (file_path == NULL)
+		path_len = strlen(dir) + strlen(command) + 2;
+		full_path = malloc(path_len);
+		if (full_path == NULL)
 		{
 			free(path_copy);
 			return (NULL);
 		}
 
-		strcpy(file_path, path_token);
-		strcat(file_path, "/");
-		strcat(file_path, command);
-
-		if (validate_command_path(file_path))
+		sprintf(full_path, "%s/%s", dir, command);
+		if (validate_command_path(full_path))
 		{
 			free(path_copy);
-			return (file_path);
+			return (full_path);
 		}
 
-		free(file_path);
-		path_token = strtok(NULL, ":");
+		free(full_path);
+		dir = strtok(NULL, ":");
 	}
+
 	free(path_copy);
 	return (NULL);
 }
-

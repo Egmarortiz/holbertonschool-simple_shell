@@ -13,16 +13,20 @@ int launch_process(char **args, shell_state_t *state)
 	pid_t pid;
 	const char *fork_err;
 	char *error_msg;
-
+	/* Find the full path of the command */
 	command_path = find_command_path(args[0]);
+
 	if (command_path == NULL)
 	{
+		/* Command not found - construct a proper error message */
 		write_command_error(args[0], "not found");
 		state->exit_status = 127; /* Command not found exit status */
-		return (1);
+		return (1); /* Continue the shell loop */
 	}
 
+	/* Fork and execute the command */
 	pid = fork_process();
+
 	if (pid == 0)
 	{
 		/* Child process */
@@ -31,19 +35,32 @@ int launch_process(char **args, shell_state_t *state)
 	}
 	else if (pid < 0)
 	{
+		/* Error forking - use write() for consistent error reporting */
 		fork_err = "fork: ";
-		write(STDERR_FILENO, fork_err, strlen(fork_err));
+		error_msg = NULL;
+		
+		write(STDERR_FILENO, fork_err, (size_t)strlen(fork_err));
+		
+		/* Get error message string */
 		error_msg = strerror(errno);
 		if (error_msg != NULL)
-			write(STDERR_FILENO, error_msg, strlen(error_msg));
+		{
+			write(STDERR_FILENO, error_msg, (size_t)strlen(error_msg));
+		}
 		write(STDERR_FILENO, "\n", 1);
+		
 		state->exit_status = 1;
 	}
 	else
+	{
+		/* Parent process */
 		wait_for_process(pid, state);
+	}
 
+	/* Free the command path */
 	free(command_path);
-	return (1);
+
+	return (1); /* Continue the shell loop */
 }
 
 /**

@@ -7,10 +7,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <signal.h>
-#include <ctype.h>
 
 /* Shell state structure */
 typedef struct shell_state {
@@ -34,14 +32,13 @@ char **split_line(char *line);
 void display_prompt(void);
 int is_interactive(void);
 void free_args(char **args);
-void write_command_error(const char *command, const char *error);
+void write_command_error(char *command, char *error);
 
 /* Command execution functions */
 int execute_command(char **args, shell_state_t *state);
 char *find_command_path(const char *command);
 int validate_command_path(const char *command_path);
 char *search_in_path(const char *command, const char *path_env);
-
 /* Process management functions */
 int launch_process(char **args, shell_state_t *state);
 pid_t fork_process(void);

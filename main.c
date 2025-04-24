@@ -1,4 +1,5 @@
 #include "shell.h"
+#include <stdio.h>
 
 /**
  * init_shell_state - Initialize the shell state structure
@@ -19,11 +20,13 @@ shell_state_t init_shell_state(void)
  * @state: Pointer to the shell state structure
  *
  * Return: 1 to continue, 0 to exit
+ */
 int process_command(char *line, shell_state_t *state)
 {
 	char **args;
 	int status = 1;
 	int i;
+	int builtin_status;
 	
 	/* Debug output to show the raw command line */
 	fprintf(stderr, "DEBUG: Raw command line: '%s'\n", line);
@@ -52,7 +55,7 @@ int process_command(char *line, shell_state_t *state)
 	}
 
 	/* Check for built-in commands first */
-	int builtin_status = check_for_builtin(args, state);
+	builtin_status = check_for_builtin(args, state);
 	fprintf(stderr, "DEBUG: check_for_builtin returned: %d\n", builtin_status);
 	
 	if (builtin_status == 1) /* Not a builtin command */
@@ -74,7 +77,6 @@ int process_command(char *line, shell_state_t *state)
 
 	free_args(args);
 	return (status);
-}
 }
 
 /**
@@ -177,4 +179,3 @@ int main(int argc, char **argv)
 
 	return (exit_status);
 }
-
